@@ -8,7 +8,7 @@ with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='dash-fda',
+    name='dash_fda',
     version='0.1.0',
     description='Python starting project',
     long_description=readme,

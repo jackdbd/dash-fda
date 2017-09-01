@@ -4,8 +4,10 @@
 # ignore Visual Studio Code settings
 /.vscode/
 
-# ignore database files
-*.db
+# ignore file where environment variables are stored
+*.env
+
+cache/
 
 # ignore compiled bytecode of Python source files
 *.pyc
