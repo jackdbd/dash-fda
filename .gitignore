@@ -1,0 +1,17 @@
+# ignore PyCharm project config files and autocompletion
+/.idea/
+
+# ignore Visual Studio Code settings
+/.vscode/
+
+# ignore database files
+*.db
+
+# ignore compiled bytecode of Python source files
+*.pyc
+__pycache__/
+
+# ignore log files
+*.log
+
+.coverage
