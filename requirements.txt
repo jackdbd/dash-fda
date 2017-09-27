@@ -7,7 +7,7 @@ coverage==4.4.1
 dash==0.18.3
 dash-core-components==0.12.6
 dash-html-components==0.7.0
-dash-renderer==0.9.0
+dash-renderer==0.10.0
 ddt==1.1.1
 decorator==4.1.2
 flake8==3.4.1
