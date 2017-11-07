@@ -2,16 +2,22 @@ import os
 import requests
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table_experiments as dt
 from flask import Flask, json
 from flask_caching import Cache
 from dash import Dash
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State, Event
 from dotenv import load_dotenv
+from datetime import datetime
 
 
 external_js = []
 
-external_css = []
+external_css = [
+    # dash stylesheet
+    'https://codepen.io/chriddyp/pen/bWLwgP.css',
+    'https://fonts.googleapis.com/css?family=Lobster|Raleway',
+]
 
 
 try:
@@ -59,84 +65,167 @@ styles = {
     'pre': {'border': 'thin lightgrey solid'}
 }
 
-app.layout = html.Div(children=[
-    html.H1(children=app_name),
+initial_url = '{openFDA}{api_endpoint}api_key={api_key}' \
+              '&search=date_received:[1991-01-01+TO+2017-11-10]' \
+              'AND+device.manufacturer_d_name:Covidien' \
+              '&count=device.generic_name.exact&limit=10'\
+    .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key)
+initial_req = requests.get(initial_url)
+initial_d = json.loads(initial_req.text)
 
-    # html.Div([
-    #     dcc.Markdown("""
-    #         **Hover Data**
-    #
-    #         Mouse over values in the graph.
-    #     """.replace('   ', '')),
-    #     html.Pre(id='hover-data', style=styles['pre'])
-    # ], style=styles['column']),
+theme = {
+    'font-family': 'Lobster',
+    'background-color': '#787878',
+}
 
-    dcc.Markdown("""
-    #### Dash and Markdown
 
-    Open FDA API endpoints
-    
-    - [Devices](https://open.fda.gov/device/)
-    - [Drugs](https://open.fda.gov/drug/)
-    - [Foods](https://open.fda.gov/food/)
+def create_header():
+    header_style = {
+        'background-color': theme['background-color'],
+        'padding': '1.5rem',
+    }
+    header = html.Header(html.H1(children=app_name, style=header_style))
+    return header
 
-    The API returns individual results as JSON by default. The JSON object has 
-    two sections: `meta` and `results`.
-    """.replace('   ', '')),
 
-    html.Div([
-        html.Label('Manufacturer', id='manufacturer-label'),
-        dcc.Dropdown(
-            options=[
-                {'label': 'Covidien', 'value': 'COVIDIEN'},
-                {'label': 'GE Healthcare', 'value': 'GE+Healthcare'},
-                {'label': 'Medtronic', 'value': 'MEDTRONIC+MINIMED'},
-                {'label': 'Zimmer', 'value': 'ZIMMER+INC.'},
-                {'label': 'Baxter', 'value': 'BAXTER+HEALTHCARE+PTE.+LTD.'},
-                {'label': 'Smiths Medical', 'value': 'SMITHS+MEDICAL+MD+INC.'},
-            ],
-            value='GE+Healthcare',
-            id='manufacturer-dropdown'
-        ),
-        html.Div(
-            [
-                html.Label('From 2007 to 2017', id='time-range-label'),
-                dcc.RangeSlider(
-                    id='year_slider',
-                    min=1991,
-                    max=2017,
-                    value=[2007, 2017]
-                ),
-            ],
-            style={'margin-top': '20'}
-        ),
-    ]),
+def create_content():
+    content = html.Div(
+        children=[
+            # date picker with start date and end date
+            html.Div(
+                children=[
+                    dcc.DatePickerRange(
+                        id='date-picker-range',
+                        calendar_orientation='horizontal',
+                        clearable=True,
+                        display_format='DD/MM/YYYY',
+                        start_date=datetime(1991, 1, 2),
+                        # start_date_placeholder_text='Select a date!',
+                        end_date=datetime.now(),
+                        # end_date_placeholder_text='Select a date!',
+                        min_date_allowed='1991-01-01',
+                    ),
+                ],
+                className='five columns',
+                # style={'background-color': '#00f'}
+            ),
+            # manufacturer label+dropdown
+            html.Div(
+                children=[
+                    # html.Label('Manufacturer', id='manufacturer-label'),
+                    dcc.Dropdown(
+                        id='manufacturer-dropdown',
+                        options=[
+                            {'label': 'Covidien', 'value': 'COVIDIEN'},
+                            {'label': 'GE Healthcare', 'value': 'GE+Healthcare'},
+                            {'label': 'Medtronic', 'value': 'MEDTRONIC+MINIMED'},
+                            {'label': 'Zimmer', 'value': 'ZIMMER+INC.'},
+                            {'label': 'Baxter', 'value': 'BAXTER+HEALTHCARE+PTE.+LTD.'},
+                            {'label': 'Smiths Medical', 'value': 'SMITHS+MEDICAL+MD+INC.'},
+                        ],
+                        # multi=True,
+                        value='GE+Healthcare',
+                    ),
+                ],
+                className='four columns offset-by-one',
+                # style={'background-color': '#0f0'},
+            ),
+            # button. It's the only Input in this app (i.e. the only component
+            # that triggers the callback )
+            html.Div(
+                children=[
+                    html.Button('Submit', id='button'),
+                ],
+                className='two columns',
+                # style={'background-color': '#f00'},
+            ),
+            # table with dash_table_experiments
+            dt.DataTable(
+                id='table-fda',
+                rows=initial_d['results'],
+                filterable=True,
+                sortable=True,
+                # selected_row_indices=[],
+            ),
+            dcc.Graph(id='graph-fda')
+        ],
+        id='content',
+        style={'width': '100%', 'height': '100%'},
+    )
+    return content
 
-    html.Hr(),
 
-    # create empty figure. It will be updated when _update_graph is triggered
-    dcc.Graph(id='graph-fda')
-])
+def create_footer():
+    footer_style = {
+        'background-color': theme['background-color'],
+        'padding': '0.5rem',
+    }
+    footer = html.Footer(children=['disclaimer here...'], style=footer_style)
+    return footer
 
-# TODO: how to limit the number of API calls triggered by a slider?
+
+def serve_layout():
+    layout = html.Div(
+        children=[
+            create_header(),
+            create_content(),
+            create_footer(),
+        ],
+        className='container',
+        style={'font-family': theme['font-family']},
+    )
+    return layout
+
+
+app.layout = serve_layout
+for js in external_js:
+    app.scripts.append_script({'external_url': js})
+for css in external_css:
+    app.css.append_css({'external_url': css})
+
+
+@app.callback(
+    output=Output('table-fda', 'rows'),
+    inputs=[Input('button', 'n_clicks')],
+    state=[
+        State('manufacturer-dropdown', 'value'),
+        State('date-picker-range', 'start_date'),
+        State('date-picker-range', 'end_date'),
+    ]
+)
+@cache.memoize(timeout=30)  # in seconds
+def _update_table(n_clicks, manufacturer, start_date, end_date):
+    start = start_date.split(' ')[0]
+    end = end_date.split(' ')[0]
+    url = '{openFDA}{api_endpoint}api_key={api_key}&search=date_received:[' \
+          '{date_start}+TO+{date_end}]+AND+device.manufacturer_d_name:' \
+          '{manufacturer}&count=device.generic_name.exact&limit={num}&skip=0' \
+        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
+                date_start=start, date_end=end, manufacturer=manufacturer, num=10)
+    req = requests.get(url)
+    d = json.loads(req.text)
+    rows = d['results']
+    return rows
 
 
 @app.callback(
     output=Output('graph-fda', 'figure'),
-    inputs=[
-        Input('manufacturer-dropdown', 'value'),
-        Input('year_slider', 'value')
-    ])
+    inputs=[Input('button', 'n_clicks')],
+    state=[
+        State('manufacturer-dropdown', 'value'),
+        State('date-picker-range', 'start_date'),
+        State('date-picker-range', 'end_date'),
+    ],
+)
 @cache.memoize(timeout=30)  # in seconds
-def _update_graph(manufacturer, year_range):
-    date_start = '{}-01-01'.format(year_range[0])
-    date_end = '{}-12-31'.format(year_range[1])
+def _update_graph(n_clicks, manufacturer, start_date, end_date):
+    start = start_date.split(' ')[0]
+    end = end_date.split(' ')[0]
     url = '{openFDA}{api_endpoint}api_key={api_key}&search=date_received:[' \
           '{date_start}+TO+{date_end}]+AND+device.manufacturer_d_name:' \
           '{manufacturer}&count=device.generic_name.exact&limit={num}&skip=0'\
         .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
-                date_start=date_start, date_end=date_end,
-                manufacturer=manufacturer, num=10)
+                date_start=start, date_end=end, manufacturer=manufacturer, num=10)
     req = requests.get(url)
     d = json.loads(req.text)
     x = [r['term'] for r in d['results']]
@@ -151,13 +240,6 @@ def _update_graph(manufacturer, year_range):
         }
     }
     return figure
-
-
-@app.callback(
-    output=Output('time-range-label', 'children'),
-    inputs=[Input('year_slider', 'value')])
-def _update_time_range_label(year_range):
-    return 'From {} to {}'.format(year_range[0], year_range[1])
 
 
 if __name__ == '__main__':
