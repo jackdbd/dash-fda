@@ -9,6 +9,7 @@ from dash import Dash
 from dash.dependencies import Input, Output, State, Event
 from dotenv import load_dotenv
 from datetime import datetime
+from dash_fda.exceptions.exceptions import ImproperlyConfigured
 
 
 external_js = []
@@ -33,11 +34,15 @@ except KeyError:
 
 openFDA = 'https://api.fda.gov/'
 api_endpoint = 'device/event.json?'
-api_key = os.environ.get('API_KEY', 'default-api-key')
+api_key = os.environ.get('OPEN_FDA_API_KEY')
+if api_key is None:
+    raise ImproperlyConfigured('openFDA API KEY not set in .env')
 
 app_name = 'Dash FDA'
 server = Flask(app_name)
-server.secret_key = os.environ.get('SECRET_KEY', 'default-secret-key')
+server.secret_key = os.environ.get('SECRET_KEY')
+if server.secret_key is None:
+    raise ImproperlyConfigured('Flask SECRET KEY not set in .env')
 app = Dash(name=app_name, server=server, csrf_protect=False)
 
 cache = Cache(app.server, config={
