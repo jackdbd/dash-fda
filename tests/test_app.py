@@ -22,5 +22,11 @@ class TestExample(unittest.TestCase):
         response = _update_graph(1, manufacturer, '1991-01-01', '2017-01-11')
         self.assertIn(manufacturer, str(response.data))
 
+    # TODO: raise ImproperlyConfigured
+
+    # TODO: 404
+
+    # TODO: BAD REQUEST https://api.fda.gov/device/event.json?api_key=api-key-here&limit=101
+
 if __name__ == '__main__':
     unittest.main()

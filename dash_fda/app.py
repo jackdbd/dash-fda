@@ -3,6 +3,8 @@ import requests
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
+import plotly.plotly as py
+import plotly.graph_objs as go
 from flask import Flask, json
 from flask_caching import Cache
 from dash import Dash
@@ -12,6 +14,11 @@ from datetime import datetime
 from dash_fda.exceptions.exceptions import ImproperlyConfigured
 
 
+def get_results(url):
+    req = requests.get(url)
+    d = json.loads(req.text)
+    return d['results']
+
 external_js = []
 
 external_css = [
@@ -20,18 +27,17 @@ external_css = [
     'https://fonts.googleapis.com/css?family=Lobster|Raleway',
 ]
 
-
-try:
+if 'DYNO' in os.environ:
     # the app is on Heroku
-    os.environ['DYNO']
     debug = False
     # google analytics with the tracking ID for this app
     external_js.append('https://codepen.io/jackdbd/pen/NgmpzR.js')
-except KeyError:
+else:
     debug = True
     dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
     load_dotenv(dotenv_path)
 
+py.sign_in(os.environ['PLOTLY_USERNAME'], os.environ['PLOTLY_API_KEY'])
 openFDA = 'https://api.fda.gov/'
 api_endpoint = 'device/event.json?'
 api_key = os.environ.get('OPEN_FDA_API_KEY')
@@ -50,33 +56,14 @@ cache = Cache(app.server, config={
     'CACHE_THRESHOLD': 10, 'CACHE_DEFAULT_TIMEOUT': 30})
 # app.config.supress_callback_exceptions = True
 
-# Number of device adverse events since 1991
-# url1 = '{openFDA}{api_endpoint}count=date_received'\
-#     .format(openFDA=openFDA, api_endpoint=api_endpoint)
-#
 # # Reported device's generic name includes x-ray
 # device_name = 'x-ray'
 # url2 = '{}{}search=device.generic_name:{}&count=date_received'\
 #     .format(openFDA, api_endpoint, device_name)
 
-styles = {
-    'column': {
-        'display': 'inline-block',
-        'width': '33%',
-        'padding': 10,
-        'boxSizing': 'border-box',
-        'minHeight': '200px'
-    },
-    'pre': {'border': 'thin lightgrey solid'}
-}
-
-initial_url = '{openFDA}{api_endpoint}api_key={api_key}' \
-              '&search=date_received:[1991-01-01+TO+2017-11-10]' \
-              'AND+device.manufacturer_d_name:Covidien' \
-              '&count=device.generic_name.exact&limit=10'\
+initial_url ='{openFDA}{api_endpoint}api_key={api_key}&count=date_of_event'\
     .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key)
-initial_req = requests.get(initial_url)
-initial_d = json.loads(initial_req.text)
+initial_results = get_results(initial_url)
 
 theme = {
     'font-family': 'Lobster',
@@ -96,6 +83,36 @@ def create_header():
 def create_content():
     content = html.Div(
         children=[
+
+            # range slider with start date and end date
+            html.Div(
+                children=[
+                    dcc.RangeSlider(
+                        id='year-slider',
+                        min=1991,
+                        max=2017,
+                        value=[2010, 2015],
+                        marks={(i): '{}'.format(i) for i in range(1991, 2017, 5)},
+                    ),
+                ],
+                style={'margin-bottom': 40},
+            ),
+
+            # pie charts
+            html.Div(
+                children=[
+                    html.Div(
+                        dcc.Graph(id='pie-event'),
+                        className='six columns',
+                    ),
+                    html.Div(
+                        dcc.Graph(id='pie-device'),
+                        className='six columns',
+                    ),
+                ],
+                className='row',
+            ),
+
             # date picker with start date and end date
             html.Div(
                 children=[
@@ -135,8 +152,7 @@ def create_content():
                 className='four columns offset-by-one',
                 # style={'background-color': '#0f0'},
             ),
-            # button. It's the only Input in this app (i.e. the only component
-            # that triggers the callback )
+            # button
             html.Div(
                 children=[
                     html.Button('Submit', id='button'),
@@ -147,12 +163,13 @@ def create_content():
             # table with dash_table_experiments
             dt.DataTable(
                 id='table-fda',
-                rows=initial_d['results'],
+                rows=initial_results,
                 filterable=True,
                 sortable=True,
                 # selected_row_indices=[],
             ),
-            dcc.Graph(id='graph-fda')
+            dcc.Graph(id='graph-fda'),
+            html.Hr(),
         ],
         id='content',
         style={'width': '100%', 'height': '100%'},
@@ -213,6 +230,11 @@ def _update_table(n_clicks, manufacturer, start_date, end_date):
     return rows
 
 
+# TIME SERIES: https://api.fda.gov/device/event.json?count=date_received
+# https://api.fda.gov/device/event.json?count=date_report_to_fda
+
+# https://api.fda.gov/device/event.json?api_key=API-KEY-HERE&search=date_received:[2016-01-01+TO+2016-01-03]+AND+event_type:Injury&limit=3
+
 @app.callback(
     output=Output('graph-fda', 'figure'),
     inputs=[Input('button', 'n_clicks')],
@@ -244,6 +266,85 @@ def _update_graph(n_clicks, manufacturer, start_date, end_date):
             'title': 'Adverse events with devices by {}'.format(manufacturer)
         }
     }
+    return figure
+
+
+@app.callback(
+    output=Output('pie-event', 'figure'),
+    inputs=[
+        Input('year-slider', 'value'),
+    ],
+)
+# @cache.memoize(timeout=30)  # in seconds
+def _update_pie_event(year_range):
+    date_start = '{}-01-01'.format(year_range[0])
+    date_end = '{}-12-31'.format(year_range[1])
+    url = '{openFDA}{api_endpoint}api_key={api_key}' \
+          '&search=date_received:[{date_start}+TO+{date_end}]' \
+          '&count=event_type'\
+        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
+                date_start=date_start, date_end=date_end)
+    results = get_results(url)
+    labels = [r['term'] for r in results]
+    values = [r['count'] for r in results]
+
+    data = go.Data([
+        go.Pie(
+            name='Event Type',
+            values=values,
+            labels=labels,
+            hoverinfo='label + percent + name',
+            hole=0.45,
+        ),
+    ])
+
+    layout = go.Layout(
+        title='Adverse Event Type',
+        autosize=True,
+        hovermode='closest',
+        font=dict(family=theme['font-family'], color='#777777', size='24'),
+        # margin=go.Margin(l=0, r=0, t=45, b=10),
+    )
+    figure = go.Figure(data=data, layout=layout)
+    return figure
+
+
+@app.callback(
+    output=Output('pie-device', 'figure'),
+    inputs=[
+        Input('year-slider', 'value'),
+    ],
+)
+# @cache.memoize(timeout=30)  # in seconds
+def _update_pie_device(year_range):
+    date_start = '{}-01-01'.format(year_range[0])
+    date_end = '{}-12-31'.format(year_range[1])
+    url = '{openFDA}{api_endpoint}api_key={api_key}' \
+          '&search=date_received:[{date_start}+TO+{date_end}]' \
+          '&count=device.openfda.device_class'\
+        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
+                date_start=date_start, date_end=date_end)
+    results = get_results(url)
+    labels = [r['term'] for r in results]
+    values = [r['count'] for r in results]
+
+    data = go.Data([
+        go.Pie(
+            name='Device Class',
+            values=values,
+            labels=labels,
+            hoverinfo='label + percent + name',
+            hole=0.45,
+        ),
+    ])
+
+    layout = go.Layout(
+        title='Medical Device Class',
+        autosize=True,
+        hovermode='closest',
+        font=dict(family=theme['font-family'], color='#777777', size='24'),
+    )
+    figure = go.Figure(data=data, layout=layout)
     return figure
 
 
