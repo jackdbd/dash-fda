@@ -347,10 +347,24 @@ def create_footer():
         'background-color': theme['background-color'],
         'padding': '0.5rem',
     }
+    p0 = html.P(
+        children=[
+            html.Span('Built with '),
+            html.A('Plotly Dash',
+                   href='https://github.com/plotly/dash', target='_blank')
+        ],
+    )
+    p1 = html.P(
+        children=[
+            html.Span('Data from the '),
+            html.A('openFDA API', href=openFDA, target='_blank')
+        ],
+    )
     meta = get_meta(initial_url)
     disclaimer = meta['disclaimer']
+    div = html.Div([p0, p1, disclaimer])
     # last_updated = meta['last_updated']
-    footer = html.Footer(children=disclaimer, style=footer_style)
+    footer = html.Footer(children=div, style=footer_style)
     return footer
 
 
