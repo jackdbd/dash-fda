@@ -16,9 +16,52 @@ from dash_fda.exceptions.exceptions import ImproperlyConfigured
 
 
 def get_results(url):
-    req = requests.get(url)
-    d = json.loads(req.text)
+    res = requests.get(url)
+    d = json.loads(res.text)
     return d['results']
+
+
+def get_dates_and_counts(url):
+    results = get_results(url)
+    df = pd.DataFrame(results)
+    # in order to group by week, year, etc we need a datetime variable and set
+    # it as an index (because DataFrame.resample needs a DatetimeIndex)
+    df['date'] = pd.to_datetime(df['time'])
+    df.set_index(df['date'], inplace=True)
+
+    # we don't need the original time column any longer, so we can drop it.
+    # df.drop(['time'], axis=1, inplace=True)
+
+    # dfr = df.resample('M').sum()
+    # dfr['month'] = dfr.index.strftime('%B')
+    # # don't sort alphabetically
+    # grouped = dfr.groupby('month', sort=False)
+    # dframe = grouped.sum()
+
+    dfr = df.resample('D').sum()
+    dfr['day'] = dfr.index.strftime('%A')
+    # don't sort alphabetically
+    grouped = dfr.groupby('day', sort=False)
+    dframe = grouped.sum()
+
+    # after grouping 'day' is used as index, but it's not necessarily sorted as
+    # we would like to have it: [Monday, Tuesday, ..., Sunday]. We can fix this
+    # in 4 steps:
+    # 1) reset index (in place): 'day' becomes a new column in the DataFrame
+    dframe.reset_index(inplace=True)
+    # 2) create new column to sort (in place) the records in the DataFrame
+    custom_dict = {'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+                   'Friday': 4, 'Saturday': 5, 'Sunday': 6}
+    dframe['rank'] = dframe['day'].map(custom_dict)
+    dframe.sort_values(by='rank', inplace=True)
+    # 3) drop (in place) the column that we have just used for sorting
+    dframe.drop(['rank'], axis=1, inplace=True)
+    # 4) restore the original index (in place)
+    dframe.set_index('day', inplace=True)
+
+    dates = dframe.index.values
+    counts = dframe['count']
+    return dates, counts
 
 
 external_js = []
@@ -367,49 +410,32 @@ def _update_pie_device(year_range):
 def _update_line_chart(year_range):
     date_start = '{}-01-01'.format(year_range[0])
     date_end = '{}-12-31'.format(year_range[1])
-    url = '{url_prefix}&search=date_of_event:[{date_start}+TO+{date_end}]' \
-          '&count=date_of_event' \
+    url_a = '{url_prefix}&search=date_of_event:[{date_start}+TO+{date_end}]' \
+            '&count=date_of_event'\
         .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+    dates_a, counts_a = get_dates_and_counts(url_a)
 
-    # url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
-    #       '&count=date_received' \
-    #     .format(url_prefix=url_prefix, date_start=date_start,
-    #             date_end=date_end)
-    results = get_results(url)
-    df = pd.DataFrame(results)
-
-    # in order to group by week, year, etc we need a datetime variable and set
-    # it as an index
-    df['date'] = pd.to_datetime(df['time'])
-    df.set_index(df['date'], inplace=True)
-    # we don't need the original time column any longer
-    df.drop(['time'], axis=1, inplace=True)
-
-    dff = df.resample('Y').sum()
-    # dff.resample('M').mean()
-    # dff.resample('D', how='sum')
-    dff.rename(columns={'count': 'aggregated_count'}, inplace=True)
-    dff['year'] = dff.index.strftime('%Y')
-
-    dates = dff['year']
-    counts = dff['aggregated_count']
+    url_b = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
+            '&count=date_received' \
+        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+    dates_b, counts_b = get_dates_and_counts(url_b)
 
     data = go.Data([
         go.Scatter(
-            x=dates,
-            y=counts,
+            x=dates_a,
+            y=counts_a,
             mode='lines',
-            name='lines',
+            name='Onset of the adverse event',
         ),
         go.Scatter(
-            x=dates,
-            y=counts,
+            x=dates_b,
+            y=counts_b,
             mode='lines+markers',
-            name='lines and markers',
-        )
+            name='Report received by FDA',
+        ),
     ])
     layout = go.Layout(
-        title='From {} to {}'.format(dates[0], dates[-1]),
+        title='From {} to {}'.format(dates_a[0], dates_a[-1]),
         yaxis={'title': 'Reports received by FDA'},
     )
     figure = go.Figure(data=data, layout=layout)
