@@ -1,5 +1,6 @@
 import os
 import requests
+import pandas as pd
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
@@ -18,6 +19,7 @@ def get_results(url):
     req = requests.get(url)
     d = json.loads(req.text)
     return d['results']
+
 
 external_js = []
 
@@ -61,8 +63,10 @@ cache = Cache(app.server, config={
 # url2 = '{}{}search=device.generic_name:{}&count=date_received'\
 #     .format(openFDA, api_endpoint, device_name)
 
-initial_url ='{openFDA}{api_endpoint}api_key={api_key}&count=date_of_event'\
+url_prefix = '{openFDA}{api_endpoint}api_key={api_key}'\
     .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key)
+
+initial_url = '{}&count=date_of_event'.format(url_prefix)
 initial_results = get_results(initial_url)
 
 theme = {
@@ -95,7 +99,7 @@ def create_content():
                         marks={(i): '{}'.format(i) for i in range(1991, 2017, 5)},
                     ),
                 ],
-                style={'margin-bottom': 40},
+                style={'margin-bottom': 20, 'background-color': '#ff0000'},
             ),
 
             # pie charts
@@ -111,6 +115,18 @@ def create_content():
                     ),
                 ],
                 className='row',
+                style={'margin-bottom': 20, 'background-color': '#789789'},
+            ),
+
+            html.Hr(),
+
+            # line chart
+            html.Div(
+                children=[
+                    dcc.Graph(id='line-chart'),
+                ],
+                className='row',
+                style={'margin-bottom': 30, 'background-color': '#ff0000'},
             ),
 
             # date picker with start date and end date
@@ -219,11 +235,11 @@ for css in external_css:
 def _update_table(n_clicks, manufacturer, start_date, end_date):
     start = start_date.split(' ')[0]
     end = end_date.split(' ')[0]
-    url = '{openFDA}{api_endpoint}api_key={api_key}&search=date_received:[' \
-          '{date_start}+TO+{date_end}]+AND+device.manufacturer_d_name:' \
-          '{manufacturer}&count=device.generic_name.exact&limit={num}&skip=0' \
-        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
-                date_start=start, date_end=end, manufacturer=manufacturer, num=10)
+    url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]+' \
+          'AND+device.manufacturer_d_name:{manufacturer}' \
+          '&count=device.generic_name.exact&limit={num}&skip=0'\
+        .format(url_prefix=url_prefix, date_start=start, date_end=end,
+                manufacturer=manufacturer, num=10)
     req = requests.get(url)
     d = json.loads(req.text)
     rows = d['results']
@@ -248,11 +264,11 @@ def _update_table(n_clicks, manufacturer, start_date, end_date):
 def _update_graph(n_clicks, manufacturer, start_date, end_date):
     start = start_date.split(' ')[0]
     end = end_date.split(' ')[0]
-    url = '{openFDA}{api_endpoint}api_key={api_key}&search=date_received:[' \
-          '{date_start}+TO+{date_end}]+AND+device.manufacturer_d_name:' \
-          '{manufacturer}&count=device.generic_name.exact&limit={num}&skip=0'\
-        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
-                date_start=start, date_end=end, manufacturer=manufacturer, num=10)
+    url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]+' \
+          'AND+device.manufacturer_d_name:{manufacturer}' \
+          '&count=device.generic_name.exact&limit={num}&skip=0'\
+        .format(url_prefix=url_prefix, date_start=start, date_end=end,
+                manufacturer=manufacturer, num=10)
     req = requests.get(url)
     d = json.loads(req.text)
     x = [r['term'] for r in d['results']]
@@ -279,11 +295,9 @@ def _update_graph(n_clicks, manufacturer, start_date, end_date):
 def _update_pie_event(year_range):
     date_start = '{}-01-01'.format(year_range[0])
     date_end = '{}-12-31'.format(year_range[1])
-    url = '{openFDA}{api_endpoint}api_key={api_key}' \
-          '&search=date_received:[{date_start}+TO+{date_end}]' \
+    url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
           '&count=event_type'\
-        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
-                date_start=date_start, date_end=date_end)
+        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
     results = get_results(url)
     labels = [r['term'] for r in results]
     values = [r['count'] for r in results]
@@ -297,7 +311,6 @@ def _update_pie_event(year_range):
             hole=0.45,
         ),
     ])
-
     layout = go.Layout(
         title='Adverse Event Type',
         autosize=True,
@@ -319,11 +332,9 @@ def _update_pie_event(year_range):
 def _update_pie_device(year_range):
     date_start = '{}-01-01'.format(year_range[0])
     date_end = '{}-12-31'.format(year_range[1])
-    url = '{openFDA}{api_endpoint}api_key={api_key}' \
-          '&search=date_received:[{date_start}+TO+{date_end}]' \
+    url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
           '&count=device.openfda.device_class'\
-        .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key,
-                date_start=date_start, date_end=date_end)
+        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
     results = get_results(url)
     labels = [r['term'] for r in results]
     values = [r['count'] for r in results]
@@ -337,12 +348,69 @@ def _update_pie_device(year_range):
             hole=0.45,
         ),
     ])
-
     layout = go.Layout(
         title='Medical Device Class',
         autosize=True,
         hovermode='closest',
         font=dict(family=theme['font-family'], color='#777777', size='24'),
+    )
+    figure = go.Figure(data=data, layout=layout)
+    return figure
+
+
+@app.callback(
+    output=Output('line-chart', 'figure'),
+    inputs=[
+        Input('year-slider', 'value'),
+    ],
+)
+def _update_line_chart(year_range):
+    date_start = '{}-01-01'.format(year_range[0])
+    date_end = '{}-12-31'.format(year_range[1])
+    url = '{url_prefix}&search=date_of_event:[{date_start}+TO+{date_end}]' \
+          '&count=date_of_event' \
+        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+
+    # url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
+    #       '&count=date_received' \
+    #     .format(url_prefix=url_prefix, date_start=date_start,
+    #             date_end=date_end)
+    results = get_results(url)
+    df = pd.DataFrame(results)
+
+    # in order to group by week, year, etc we need a datetime variable and set
+    # it as an index
+    df['date'] = pd.to_datetime(df['time'])
+    df.set_index(df['date'], inplace=True)
+    # we don't need the original time column any longer
+    df.drop(['time'], axis=1, inplace=True)
+
+    dff = df.resample('Y').sum()
+    # dff.resample('M').mean()
+    # dff.resample('D', how='sum')
+    dff.rename(columns={'count': 'aggregated_count'}, inplace=True)
+    dff['year'] = dff.index.strftime('%Y')
+
+    dates = dff['year']
+    counts = dff['aggregated_count']
+
+    data = go.Data([
+        go.Scatter(
+            x=dates,
+            y=counts,
+            mode='lines',
+            name='lines',
+        ),
+        go.Scatter(
+            x=dates,
+            y=counts,
+            mode='lines+markers',
+            name='lines and markers',
+        )
+    ])
+    layout = go.Layout(
+        title='From {} to {}'.format(dates[0], dates[-1]),
+        yaxis={'title': 'Reports received by FDA'},
     )
     figure = go.Figure(data=data, layout=layout)
     return figure
