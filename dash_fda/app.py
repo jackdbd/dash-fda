@@ -1,5 +1,4 @@
 import os
-import requests
 import pandas as pd
 import dash_core_components as dcc
 import dash_html_components as html
@@ -9,34 +8,81 @@ import plotly.graph_objs as go
 from flask import Flask, json
 from flask_caching import Cache
 from dash import Dash
-from dash.dependencies import Input, Output, State, Event
+from dash.dependencies import Input, Output, State
 from dotenv import load_dotenv
 from datetime import datetime
-from dash_fda.exceptions.exceptions import ImproperlyConfigured
+from dash_fda.utils import get_results, create_intermediate_df, unjsonify
+from dash_fda.exceptions import ImproperlyConfigured
 
 
-def get_results(url):
-    res = requests.get(url)
-    d = json.loads(res.text)
-    return d['results']
-
-
-def get_dates_and_counts(url):
-    results = get_results(url)
-    df = pd.DataFrame(results)
-    # in order to group by week, year, etc we need a datetime variable and set
-    # it as an index (because DataFrame.resample needs a DatetimeIndex)
+def create_years(df):
+    # In order to group by week, year, etc later on, we need to create a
+    # datetime variable now and set it as an index (because DataFrame.resample
+    # needs a DatetimeIndex)
     df['date'] = pd.to_datetime(df['time'])
     df.set_index(df['date'], inplace=True)
+    # we don't need the original 'time' column any longer, so we can drop it.
+    df.drop(['time'], axis=1, inplace=True)
 
-    # we don't need the original time column any longer, so we can drop it.
-    # df.drop(['time'], axis=1, inplace=True)
+    dfr = df.resample('Y').sum()
+    dfr['year'] = dfr.index.strftime('%Y')
+    grouped = dfr.groupby('year')
+    dframe = grouped.sum()
+    return dframe
 
-    # dfr = df.resample('M').sum()
-    # dfr['month'] = dfr.index.strftime('%B')
-    # # don't sort alphabetically
-    # grouped = dfr.groupby('month', sort=False)
-    # dframe = grouped.sum()
+
+def create_months(df):
+    # In order to group by week, year, etc later on, we need to create a
+    # datetime variable now and set it as an index (because DataFrame.resample
+    # needs a DatetimeIndex)
+    df['date'] = pd.to_datetime(df['time'])
+    df.set_index(df['date'], inplace=True)
+    # we don't need the original 'time' column any longer, so we can drop it.
+    df.drop(['time'], axis=1, inplace=True)
+
+    dfr = df.resample('M').sum()
+    dfr['month'] = dfr.index.strftime('%B')
+    # don't sort alphabetically
+    grouped = dfr.groupby('month', sort=False)
+    dframe = grouped.sum()
+
+    # We now have a DataFrame grouped by month of the year, but not necessarily
+    # sorted as we would like to have it: [January, February, ..., December].
+    # We can fix this in 4 steps:
+    # 1) reset index (in place): 'month' becomes a new column in the DataFrame
+    dframe.reset_index(inplace=True)
+    # 2) create new column to sort (in place) the records in the DataFrame
+    custom_dict = {
+        'January': 0,
+        'February': 1,
+        'March': 2,
+        'April': 3,
+        'May': 4,
+        'June': 5,
+        'July': 6,
+        'August': 7,
+        'September': 8,
+        'October': 9,
+        'November': 10,
+        'December': 11,
+    }
+    dframe['rank'] = dframe['month'].map(custom_dict)
+    dframe.sort_values(by='rank', inplace=True)
+    # 3) drop (in place) the column that we have just used for sorting
+    dframe.drop(['rank'], axis=1, inplace=True)
+    # 4) restore the original index (in place)
+    dframe.set_index('month', inplace=True)
+    return dframe
+
+
+def create_days(df):
+    # In order to group by week, year, etc later on, we need to create a
+    # datetime variable now and set it as an index (because DataFrame.resample
+    # needs a DatetimeIndex)
+    df['date'] = pd.to_datetime(df['time'])
+    df.set_index(df['date'], inplace=True)
+    # we don't need the original 'time' column any longer, so we can drop it.
+    df.drop(['time'], axis=1, inplace=True)
 
     dfr = df.resample('D').sum()
     dfr['day'] = dfr.index.strftime('%A')
@@ -44,24 +90,28 @@ def get_dates_and_counts(url):
     grouped = dfr.groupby('day', sort=False)
     dframe = grouped.sum()
 
-    # after grouping 'day' is used as index, but it's not necessarily sorted as
-    # we would like to have it: [Monday, Tuesday, ..., Sunday]. We can fix this
-    # in 4 steps:
+    # We now have a DataFrame grouped by weekday, but not necessarily sorted as
+    # we would like to have it: [Monday, Tuesday, ..., Sunday].
+    # We can fix this in 4 steps:
     # 1) reset index (in place): 'day' becomes a new column in the DataFrame
     dframe.reset_index(inplace=True)
     # 2) create new column to sort (in place) the records in the DataFrame
-    custom_dict = {'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
-                   'Friday': 4, 'Saturday': 5, 'Sunday': 6}
+    custom_dict = {
+        'Monday': 0,
+        'Tuesday': 1,
+        'Wednesday': 2,
+        'Thursday': 3,
+        'Friday': 4,
+        'Saturday': 5,
+        'Sunday': 6
+    }
     dframe['rank'] = dframe['day'].map(custom_dict)
     dframe.sort_values(by='rank', inplace=True)
     # 3) drop (in place) the column that we have just used for sorting
     dframe.drop(['rank'], axis=1, inplace=True)
     # 4) restore the original index (in place)
     dframe.set_index('day', inplace=True)
-
-    dates = dframe.index.values
-    counts = dframe['count']
-    return dates, counts
+    return dframe
 
 
 external_js = []
@@ -101,10 +151,6 @@ cache = Cache(app.server, config={
     'CACHE_THRESHOLD': 10, 'CACHE_DEFAULT_TIMEOUT': 30})
 # app.config.supress_callback_exceptions = True
 
-# # Reported device's generic name includes x-ray
-# device_name = 'x-ray'
-# url2 = '{}{}search=device.generic_name:{}&count=date_received'\
-#     .format(openFDA, api_endpoint, device_name)
 
 url_prefix = '{openFDA}{api_endpoint}api_key={api_key}'\
     .format(openFDA=openFDA, api_endpoint=api_endpoint, api_key=api_key)
@@ -139,11 +185,22 @@ def create_content():
                         min=1991,
                         max=2017,
                         value=[2010, 2015],
-                        marks={(i): '{}'.format(i) for i in range(1991, 2017, 5)},
+                        marks={(i): '{}'.format(i) for i in range(1991, 2017, 2)},
                     ),
                 ],
-                style={'margin-bottom': 20, 'background-color': '#ff0000'},
+                style={'margin-bottom': 20},
             ),
+
+            # line charts
+            html.Div(
+                children=[
+                    dcc.Graph(id='line-chart-year'),
+                    dcc.Graph(id='line-chart-month'),
+                    dcc.Graph(id='line-chart-day'),
+                ],
+            ),
+
+            html.Hr(),
 
             # pie charts
             html.Div(
@@ -158,19 +215,10 @@ def create_content():
                     ),
                 ],
                 className='row',
-                style={'margin-bottom': 20, 'background-color': '#789789'},
+                style={'margin-bottom': 20},
             ),
 
             html.Hr(),
-
-            # line chart
-            html.Div(
-                children=[
-                    dcc.Graph(id='line-chart'),
-                ],
-                className='row',
-                style={'margin-bottom': 30, 'background-color': '#ff0000'},
-            ),
 
             # date picker with start date and end date
             html.Div(
@@ -188,8 +236,8 @@ def create_content():
                     ),
                 ],
                 className='five columns',
-                # style={'background-color': '#00f'}
             ),
+
             # manufacturer label+dropdown
             html.Div(
                 children=[
@@ -209,16 +257,16 @@ def create_content():
                     ),
                 ],
                 className='four columns offset-by-one',
-                # style={'background-color': '#0f0'},
             ),
+
             # button
             html.Div(
                 children=[
                     html.Button('Submit', id='button'),
                 ],
                 className='two columns',
-                # style={'background-color': '#f00'},
             ),
+
             # table with dash_table_experiments
             dt.DataTable(
                 id='table-fda',
@@ -227,7 +275,9 @@ def create_content():
                 sortable=True,
                 # selected_row_indices=[],
             ),
+
             dcc.Graph(id='graph-fda'),
+
             html.Hr(),
         ],
         id='content',
@@ -248,6 +298,8 @@ def create_footer():
 def serve_layout():
     layout = html.Div(
         children=[
+            # Hidden div inside the app that stores the intermediate value
+            html.Div(id='intermediate-value', style={'display': 'none'}),
             create_header(),
             create_content(),
             create_footer(),
@@ -283,16 +335,37 @@ def _update_table(n_clicks, manufacturer, start_date, end_date):
           '&count=device.generic_name.exact&limit={num}&skip=0'\
         .format(url_prefix=url_prefix, date_start=start, date_end=end,
                 manufacturer=manufacturer, num=10)
-    req = requests.get(url)
-    d = json.loads(req.text)
-    rows = d['results']
+    rows = get_results(url)
     return rows
 
 
-# TIME SERIES: https://api.fda.gov/device/event.json?count=date_received
-# https://api.fda.gov/device/event.json?count=date_report_to_fda
+@app.callback(
+    output=Output('intermediate-value', 'children'),
+    inputs=[Input('year-slider', 'value')],
+)
+# @cache.memoize(timeout=30)  # in seconds
+def _update_intermediate_value(year_range):
+    date_start = '{}-01-01'.format(year_range[0])
+    date_end = '{}-12-31'.format(year_range[1])
 
-# https://api.fda.gov/device/event.json?api_key=API-KEY-HERE&search=date_received:[2016-01-01+TO+2016-01-03]+AND+event_type:Injury&limit=3
+    url_a = '{url_prefix}&search=date_of_event:[{date_start}+TO+{date_end}]' \
+            '&count=date_of_event'\
+        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+    df_a = create_intermediate_df(url_a)
+
+    url_b = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
+            '&count=date_received' \
+        .format(url_prefix=url_prefix, date_start=date_start,
+                date_end=date_end)
+    df_b = create_intermediate_df(url_b)
+
+    children = [
+        html.Div(df_a.to_json(), id='json-date-of-event'),
+        html.Div(df_b.to_json(), id='json-date-received')
+    ]
+
+    return children
+
 
 @app.callback(
     output=Output('graph-fda', 'figure'),
@@ -312,10 +385,9 @@ def _update_graph(n_clicks, manufacturer, start_date, end_date):
           '&count=device.generic_name.exact&limit={num}&skip=0'\
         .format(url_prefix=url_prefix, date_start=start, date_end=end,
                 manufacturer=manufacturer, num=10)
-    req = requests.get(url)
-    d = json.loads(req.text)
-    x = [r['term'] for r in d['results']]
-    y = [r['count'] for r in d['results']]
+    results = get_results(url)
+    x = [r['term'] for r in results]
+    y = [r['count'] for r in results]
 
     figure = {
         'data': [
@@ -352,6 +424,7 @@ def _update_pie_event(year_range):
             labels=labels,
             hoverinfo='label + percent + name',
             hole=0.45,
+            # showlegend=False,
         ),
     ])
     layout = go.Layout(
@@ -402,42 +475,106 @@ def _update_pie_device(year_range):
 
 
 @app.callback(
-    output=Output('line-chart', 'figure'),
+    output=Output('line-chart-year', 'figure'),
     inputs=[
-        Input('year-slider', 'value'),
+        Input('intermediate-value', 'children'),
     ],
 )
-def _update_line_chart(year_range):
-    date_start = '{}-01-01'.format(year_range[0])
-    date_end = '{}-12-31'.format(year_range[1])
-    url_a = '{url_prefix}&search=date_of_event:[{date_start}+TO+{date_end}]' \
-            '&count=date_of_event'\
-        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
-    dates_a, counts_a = get_dates_and_counts(url_a)
+def _update_line_chart_by_year(jsonified_divs):
+    df_a = unjsonify(jsonified_divs, 'json-date-of-event')
+    df_a.rename(columns={'count': 'A'}, inplace=True)
+    df_b = unjsonify(jsonified_divs, 'json-date-received')
+    df_b.rename(columns={'count': 'B'}, inplace=True)
 
-    url_b = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
-            '&count=date_received' \
-        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
-    dates_b, counts_b = get_dates_and_counts(url_b)
+    df_merged = pd.merge(df_a, df_b, on='time')
+
+    df = create_years(df_merged)
 
     data = go.Data([
         go.Scatter(
-            x=dates_a,
-            y=counts_a,
+            x=df.index.values,
+            y=df.A,
             mode='lines',
             name='Onset of the adverse event',
         ),
         go.Scatter(
-            x=dates_b,
-            y=counts_b,
+            x=df.index.values,
+            y=df['B'],
             mode='lines+markers',
             name='Report received by FDA',
         ),
     ])
-    layout = go.Layout(
-        title='From {} to {}'.format(dates_a[0], dates_a[-1]),
-        yaxis={'title': 'Reports received by FDA'},
-    )
+    layout = go.Layout(title='Adverse event reports by Year')
+    figure = go.Figure(data=data, layout=layout)
+    return figure
+
+
+@app.callback(
+    output=Output('line-chart-month', 'figure'),
+    inputs=[
+        Input('intermediate-value', 'children'),
+    ],
+)
+def _update_line_chart_by_month(jsonified_divs):
+    df_a = unjsonify(jsonified_divs, 'json-date-of-event')
+    df_a.rename(columns={'count': 'A'}, inplace=True)
+    df_b = unjsonify(jsonified_divs, 'json-date-received')
+    df_b.rename(columns={'count': 'B'}, inplace=True)
+
+    df_merged = pd.merge(df_a, df_b, on='time')
+
+    df = create_months(df_merged)
+
+    data = go.Data([
+        go.Scatter(
+            x=df.index.values,
+            y=df.A,
+            mode='lines',
+            name='Onset of the adverse event',
+        ),
+        go.Scatter(
+            x=df.index.values,
+            y=df['B'],
+            mode='lines+markers',
+            name='Report received by FDA',
+        ),
+    ])
+    layout = go.Layout(title='Adverse event reports by Month')
+    figure = go.Figure(data=data, layout=layout)
+    return figure
+
+
+@app.callback(
+    output=Output('line-chart-day', 'figure'),
+    inputs=[
+        Input('intermediate-value', 'children'),
+    ],
+)
+def _update_line_chart_by_day(jsonified_divs):
+    df_a = unjsonify(jsonified_divs, 'json-date-of-event')
+    df_a.rename(columns={'count': 'A'}, inplace=True)
+    df_b = unjsonify(jsonified_divs, 'json-date-received')
+    df_b.rename(columns={'count': 'B'}, inplace=True)
+
+    df_merged = pd.merge(df_a, df_b, on='time')
+
+    df = create_days(df_merged)
+
+    data = go.Data([
+        go.Scatter(
+            x=df.index.values,
+            y=df.A,
+            mode='lines',
+            name='Onset of the adverse event',
+        ),
+        go.Scatter(
+            x=df.index.values,
+            y=df['B'],
+            mode='lines+markers',
+            name='Report received by FDA',
+        ),
+    ])
+    layout = go.Layout(title='Adverse event reports by Day')
     figure = go.Figure(data=data, layout=layout)
     return figure
 
