@@ -5,6 +5,7 @@ import dash_html_components as html
 import dash_table_experiments as dt
 import plotly.plotly as py
 import plotly.graph_objs as go
+from functools import partial
 from flask import Flask
 from flask_caching import Cache
 from dash import Dash
@@ -74,6 +75,42 @@ def create_months(df):
     # 4) restore the original index (in place)
     dframe.set_index('month', inplace=True)
     return dframe
+
+
+def create_months_box(df):
+    # In order to group by week, year, etc later on, we need to create a
+    # datetime variable now and set it as an index (because DataFrame.resample
+    # needs a DatetimeIndex)
+    df['date'] = pd.to_datetime(df['time'])
+    df.set_index(df['date'], inplace=True)
+    # we don't need the original 'time' column any longer, so we can drop it.
+    df.drop(['time'], axis=1, inplace=True)
+
+    dfr = df.resample('M').sum()
+    dfr['month'] = dfr.index.strftime('%B')
+
+    months = ['January', 'February', 'March', 'April', 'May', 'June',
+              'July', 'August', 'September', 'October', 'November', 'December']
+    dataframes = list()
+    for m in months:
+        arr = dfr[dfr.month == m]['count'].values
+        dff = pd.DataFrame({m: arr})
+        dataframes.append(dff)
+
+    dframe = pd.concat(dataframes, axis=1)
+    return dframe
+
+
+    # # don't sort alphabetically
+    # grouped = dfr.groupby('month', sort=False)
+    #
+    # dataframes = list()
+    # for group in grouped.groups:
+    #     df_month = grouped.get_group(group)
+    #     df_month.reset_index(inplace=True)
+    #     df_month.rename(columns={'count': group}, inplace=True)
+    #     df_month.drop(['date'], axis=1, inplace=True)
+    #     dataframes.append(df_month)
 
 
 def create_days(df):
@@ -165,6 +202,15 @@ theme = {
 }
 
 
+def create_box(df, column):
+    box = go.Box(
+        name=column,
+        y=df[column].values,
+        boxmean=True,
+    )
+    return box
+
+
 def create_header():
     header_style = {
         'background-color': theme['background-color'],
@@ -191,6 +237,15 @@ def create_content():
                 ],
                 style={'margin-bottom': 20},
             ),
+
+            # box plot
+            html.Div(
+                children=[
+                    dcc.Graph(id='box-plot-month'),
+                ],
+            ),
+
+            html.Hr(),
 
             # line charts
             html.Div(
@@ -544,6 +599,26 @@ def _update_line_chart_by_month(jsonified_divs):
         ),
     ])
     layout = go.Layout(title='Adverse event reports by Month')
+    figure = go.Figure(data=data, layout=layout)
+    return figure
+
+
+
+@app.callback(
+    output=Output('box-plot-month', 'figure'),
+    inputs=[
+        Input('intermediate-value', 'children'),
+    ],
+)
+def _update_box_plot_by_month(jsonified_divs):
+    df_b = unjsonify(jsonified_divs, 'json-date-received')
+    df = create_months_box(df_b)
+
+    func = partial(create_box, df)
+    boxes = list(map(func, df.columns))
+
+    data = go.Data(boxes)
+    layout = go.Layout(title='Adverse event reports received by Month')
     figure = go.Figure(data=data, layout=layout)
     return figure
 
