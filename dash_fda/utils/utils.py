@@ -5,8 +5,12 @@ from flask import json
 
 def get_results(url):
     response = requests.get(url)
-    d = json.loads(response.text)
-    return d['results']
+    if response.ok:
+        d = json.loads(response.text)
+        results = d['results']
+    else:
+        results = []
+    return results
 
 
 def get_meta(url):

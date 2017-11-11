@@ -2,7 +2,8 @@ import requests
 import unittest
 import dash_html_components as html
 from ddt import ddt, data
-from dash_fda.app import app, _update_graph, _update_table, url_prefix
+from flask import json
+from dash_fda.app import app, _update_table, url_prefix
 
 
 @ddt
@@ -26,13 +27,14 @@ class TestExample(unittest.TestCase):
         self.assertEqual(res.status_code, 400)
 
     def test_response_status_code_is_200(self):
-        response = _update_table(1, 'COVIDIEN', '1991-01-01', '2017-01-11')
+        response = _update_table(1, [1991, 2017], 'COVIDIEN', 'ligasure')
         self.assertEqual(response.status_code, 200)
 
     @data('COVIDIEN', 'GE+Healthcare', 'MEDTRONIC+MINIMED')
-    def test_manufacturer_appears_in_reponse(self, manufacturer):
-        response = _update_graph(1, manufacturer, '1991-01-01', '2017-01-11')
-        self.assertIn(manufacturer, str(response.data))
+    def test_no_results_in_table_when_input_is_missing(self, manufacturer):
+        response = _update_table(1, [1991, 2017], manufacturer, '')
+        d = json.loads(response.data)
+        self.assertListEqual(d['response']['props']['rows'], [])
 
 
 if __name__ == '__main__':

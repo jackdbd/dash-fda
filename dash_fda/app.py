@@ -11,7 +11,6 @@ from flask_caching import Cache
 from dash import Dash
 from dash.dependencies import Input, Output, State
 from dotenv import load_dotenv
-from datetime import datetime
 from dash_fda.utils import get_results, get_meta, create_intermediate_df, \
     unjsonify
 from dash_fda.exceptions import ImproperlyConfigured
@@ -101,18 +100,6 @@ def create_months_box(df):
     return dframe
 
 
-    # # don't sort alphabetically
-    # grouped = dfr.groupby('month', sort=False)
-    #
-    # dataframes = list()
-    # for group in grouped.groups:
-    #     df_month = grouped.get_group(group)
-    #     df_month.reset_index(inplace=True)
-    #     df_month.rename(columns={'count': group}, inplace=True)
-    #     df_month.drop(['date'], axis=1, inplace=True)
-    #     dataframes.append(df_month)
-
-
 def create_days(df):
     # In order to group by week, year, etc later on, we need to create a
     # datetime variable now and set it as an index (because DataFrame.resample
@@ -197,8 +184,10 @@ initial_url = '{}&count=date_of_event'.format(url_prefix)
 initial_results = get_results(initial_url)
 
 theme = {
-    'font-family': 'Lobster',
-    'background-color': '#787878',
+    'font-family': 'Raleway',
+    # 'font-family': 'Lobster',
+    # 'background-color': '#787878',
+    'background-color': '#e0e0e0',
 }
 
 
@@ -277,50 +266,79 @@ def create_content():
             html.Hr(),
 
             # date picker with start date and end date
-            html.Div(
-                children=[
-                    dcc.DatePickerRange(
-                        id='date-picker-range',
-                        calendar_orientation='horizontal',
-                        clearable=True,
-                        display_format='DD/MM/YYYY',
-                        start_date=datetime(1991, 1, 2),
-                        # start_date_placeholder_text='Select a date!',
-                        end_date=datetime.now(),
-                        # end_date_placeholder_text='Select a date!',
-                        min_date_allowed='1991-01-01',
-                    ),
-                ],
-                className='five columns',
-            ),
+            # html.Div(
+            #     children=[
+            #         dcc.DatePickerRange(
+            #             id='date-picker-range',
+            #             calendar_orientation='horizontal',
+            #             clearable=True,
+            #             display_format='DD/MM/YYYY',
+            #             start_date=datetime(1991, 1, 2),
+            #             # start_date_placeholder_text='Select a date!',
+            #             end_date=datetime.now(),
+            #             # end_date_placeholder_text='Select a date!',
+            #             min_date_allowed='1991-01-01',
+            #         ),
+            #     ],
+            #     className='five columns',
+            # ),
 
-            # manufacturer label+dropdown
             html.Div(
                 children=[
-                    # html.Label('Manufacturer', id='manufacturer-label'),
-                    dcc.Dropdown(
-                        id='manufacturer-dropdown',
-                        options=[
-                            {'label': 'Covidien', 'value': 'COVIDIEN'},
-                            {'label': 'GE Healthcare', 'value': 'GE+Healthcare'},
-                            {'label': 'Medtronic', 'value': 'MEDTRONIC+MINIMED'},
-                            {'label': 'Zimmer', 'value': 'ZIMMER+INC.'},
-                            {'label': 'Baxter', 'value': 'BAXTER+HEALTHCARE+PTE.+LTD.'},
-                            {'label': 'Smiths Medical', 'value': 'SMITHS+MEDICAL+MD+INC.'},
+
+                    # medical device label+input
+                    html.Div(
+                        children=[
+                            html.Label('Device'),
+                            dcc.Input(
+                                id='medical-device-input',
+                                placeholder='E.g. x-ray',
+                                type='text',
+                                value=''
+                            )
                         ],
-                        # multi=True,
-                        value='GE+Healthcare',
+                        className='four columns',
                     ),
-                ],
-                className='four columns offset-by-one',
-            ),
 
-            # button
-            html.Div(
-                children=[
-                    html.Button('Submit', id='button'),
+                    # manufacturer label+dropdown
+                    html.Div(
+                        children=[
+                            html.Label('Manufacturer'),
+                            dcc.Dropdown(
+                                id='manufacturer-dropdown',
+                                options=[
+                                    {'label': 'Covidien', 'value': 'COVIDIEN'},
+                                    {'label': 'Esaote', 'value': 'ESAOTE'},
+                                    {'label': 'Dräger', 'value': 'DRAEGER'},
+                                    {'label': 'GE Healthcare',
+                                     'value': 'GE+Healthcare'},
+                                    {'label': 'Medtronic',
+                                     'value': 'MEDTRONIC+MINIMED'},
+                                    {'label': 'Zimmer',
+                                     'value': 'ZIMMER+INC.'},
+                                    {'label': 'Baxter',
+                                     'value': 'BAXTER+HEALTHCARE+PTE.+LTD.'},
+                                    {'label': 'Smiths Medical',
+                                     'value': 'SMITHS+MEDICAL+MD+INC.'},
+                                ],
+                                # multi=True,
+                                value='GE+Healthcare',
+                            ),
+                        ],
+                        className='four columns',
+                    ),
+
+                    # button
+                    html.Div(
+                        children=[
+                            html.Button('Submit', id='button',
+                                        style={'margin-top': '1em'}),
+                        ],
+                        className='two columns offset-by-two',
+                    ),
+
                 ],
-                className='two columns',
+                className='row',
             ),
 
             # table with dash_table_experiments
@@ -331,8 +349,6 @@ def create_content():
                 sortable=True,
                 # selected_row_indices=[],
             ),
-
-            dcc.Graph(id='graph-fda'),
 
             html.Hr(),
         ],
@@ -394,21 +410,37 @@ for css in external_css:
     output=Output('table-fda', 'rows'),
     inputs=[Input('button', 'n_clicks')],
     state=[
+        State('year-slider', 'value'),
         State('manufacturer-dropdown', 'value'),
-        State('date-picker-range', 'start_date'),
-        State('date-picker-range', 'end_date'),
+        State('medical-device-input', 'value'),
+
     ]
 )
 @cache.memoize(timeout=30)  # in seconds
-def _update_table(n_clicks, manufacturer, start_date, end_date):
-    start = start_date.split(' ')[0]
-    end = end_date.split(' ')[0]
+def _update_table(n_clicks, year_range, manufacturer, device):
+    start = '{}-01-01'.format(year_range[0])
+    end = '{}-12-31'.format(year_range[1])
     url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]+' \
-          'AND+device.manufacturer_d_name:{manufacturer}' \
-          '&count=device.generic_name.exact&limit={num}&skip=0'\
+          'AND+device.manufacturer_d_name:{manufacturer}+' \
+          'AND+device.generic_name:{device}&limit={num}&skip=0'\
         .format(url_prefix=url_prefix, date_start=start, date_end=end,
-                manufacturer=manufacturer, num=10)
-    rows = get_results(url)
+                manufacturer=manufacturer, device=device, num=100)
+    results = get_results(url)
+
+    # TODO: it seems that most of the info is in the mdr_text field (a list)
+    rows = list()
+    for res in results:
+        if len(res['mdr_text']) > 0:
+            yes_or_no = 'Yes'
+        else:
+            yes_or_no = 'No'
+        row = {
+            'Event type': res['event_type'],
+            'Location': res['event_location'],
+            'Reporter': res['reporter_occupation_code'],
+            'Has MDR Text': yes_or_no,
+        }
+        rows.append(row)
     return rows
 
 
@@ -418,59 +450,25 @@ def _update_table(n_clicks, manufacturer, start_date, end_date):
 )
 # @cache.memoize(timeout=30)  # in seconds
 def _update_intermediate_value(year_range):
-    date_start = '{}-01-01'.format(year_range[0])
-    date_end = '{}-12-31'.format(year_range[1])
+    start = '{}-01-01'.format(year_range[0])
+    end = '{}-12-31'.format(year_range[1])
 
     url_a = '{url_prefix}&search=date_of_event:[{date_start}+TO+{date_end}]' \
             '&count=date_of_event'\
-        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+        .format(url_prefix=url_prefix, date_start=start, date_end=end)
     df_a = create_intermediate_df(url_a)
 
     url_b = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
             '&count=date_received' \
-        .format(url_prefix=url_prefix, date_start=date_start,
-                date_end=date_end)
+        .format(url_prefix=url_prefix, date_start=start,
+                date_end=end)
     df_b = create_intermediate_df(url_b)
 
     children = [
         html.Div(df_a.to_json(), id='json-date-of-event'),
         html.Div(df_b.to_json(), id='json-date-received')
     ]
-
     return children
-
-
-@app.callback(
-    output=Output('graph-fda', 'figure'),
-    inputs=[Input('button', 'n_clicks')],
-    state=[
-        State('manufacturer-dropdown', 'value'),
-        State('date-picker-range', 'start_date'),
-        State('date-picker-range', 'end_date'),
-    ],
-)
-@cache.memoize(timeout=30)  # in seconds
-def _update_graph(n_clicks, manufacturer, start_date, end_date):
-    start = start_date.split(' ')[0]
-    end = end_date.split(' ')[0]
-    url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]+' \
-          'AND+device.manufacturer_d_name:{manufacturer}' \
-          '&count=device.generic_name.exact&limit={num}&skip=0'\
-        .format(url_prefix=url_prefix, date_start=start, date_end=end,
-                manufacturer=manufacturer, num=10)
-    results = get_results(url)
-    x = [r['term'] for r in results]
-    y = [r['count'] for r in results]
-
-    figure = {
-        'data': [
-            {'x': x, 'y': y, 'type': 'bar', 'name': manufacturer},
-        ],
-        'layout': {
-            'title': 'Adverse events with devices by {}'.format(manufacturer)
-        }
-    }
-    return figure
 
 
 @app.callback(
@@ -481,11 +479,11 @@ def _update_graph(n_clicks, manufacturer, start_date, end_date):
 )
 # @cache.memoize(timeout=30)  # in seconds
 def _update_pie_event(year_range):
-    date_start = '{}-01-01'.format(year_range[0])
-    date_end = '{}-12-31'.format(year_range[1])
+    start = '{}-01-01'.format(year_range[0])
+    end = '{}-12-31'.format(year_range[1])
     url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
           '&count=event_type'\
-        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+        .format(url_prefix=url_prefix, date_start=start, date_end=end)
     results = get_results(url)
     labels = [r['term'] for r in results]
     values = [r['count'] for r in results]
@@ -519,11 +517,11 @@ def _update_pie_event(year_range):
 )
 # @cache.memoize(timeout=30)  # in seconds
 def _update_pie_device(year_range):
-    date_start = '{}-01-01'.format(year_range[0])
-    date_end = '{}-12-31'.format(year_range[1])
+    start = '{}-01-01'.format(year_range[0])
+    end = '{}-12-31'.format(year_range[1])
     url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
           '&count=device.openfda.device_class'\
-        .format(url_prefix=url_prefix, date_start=date_start, date_end=date_end)
+        .format(url_prefix=url_prefix, date_start=start, date_end=end)
     results = get_results(url)
     labels = [r['term'] for r in results]
     values = [r['count'] for r in results]
@@ -560,7 +558,6 @@ def _update_line_chart_by_year(jsonified_divs):
     df_b.rename(columns={'count': 'B'}, inplace=True)
 
     df_merged = pd.merge(df_a, df_b, on='time')
-
     df = create_years(df_merged)
 
     data = go.Data([
@@ -595,7 +592,6 @@ def _update_line_chart_by_month(jsonified_divs):
     df_b.rename(columns={'count': 'B'}, inplace=True)
 
     df_merged = pd.merge(df_a, df_b, on='time')
-
     df = create_months(df_merged)
 
     data = go.Data([
@@ -650,7 +646,6 @@ def _update_line_chart_by_day(jsonified_divs):
     df_b.rename(columns={'count': 'B'}, inplace=True)
 
     df_merged = pd.merge(df_a, df_b, on='time')
-
     df = create_days(df_merged)
 
     data = go.Data([
