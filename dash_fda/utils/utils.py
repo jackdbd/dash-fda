@@ -9,6 +9,12 @@ def get_results(url):
     return d['results']
 
 
+def get_meta(url):
+    response = requests.get(url)
+    d = json.loads(response.text)
+    return d['meta']
+
+
 def create_intermediate_df(url):
     results = get_results(url)
     df = pd.DataFrame(results)

@@ -5,13 +5,14 @@ import dash_html_components as html
 import dash_table_experiments as dt
 import plotly.plotly as py
 import plotly.graph_objs as go
-from flask import Flask, json
+from flask import Flask
 from flask_caching import Cache
 from dash import Dash
 from dash.dependencies import Input, Output, State
 from dotenv import load_dotenv
 from datetime import datetime
-from dash_fda.utils import get_results, create_intermediate_df, unjsonify
+from dash_fda.utils import get_results, get_meta, create_intermediate_df, \
+    unjsonify
 from dash_fda.exceptions import ImproperlyConfigured
 
 
@@ -291,7 +292,10 @@ def create_footer():
         'background-color': theme['background-color'],
         'padding': '0.5rem',
     }
-    footer = html.Footer(children=['disclaimer here...'], style=footer_style)
+    meta = get_meta(initial_url)
+    disclaimer = meta['disclaimer']
+    # last_updated = meta['last_updated']
+    footer = html.Footer(children=disclaimer, style=footer_style)
     return footer
 
 
