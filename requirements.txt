@@ -76,4 +76,4 @@ ufw==0.35
 unattended-upgrades==0.1
 urllib3==1.22
 xkit==0.0.0
-xlrd==0.9.4
+xlrd==1.1.0
