@@ -44,7 +44,7 @@ piston-mini-client==0.7.5
 psutil==3.4.2
 ptyprocess==0.5
 py==1.4.31
-pyasn1==0.1.9
+pyasn1==0.3.7
 pycrypto==2.6.1
 pycups==1.9.73
 pycurl==7.43.0
