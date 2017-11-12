@@ -18,7 +18,7 @@ flake8==2.5.4
 floyd-cli==0.10.5
 html5lib==0.999
 httplib2==0.9.1
-idna==2.5
+idna==2.6
 invoke==0.20.3
 jdcal==1.0
 language-selector==0.1
