@@ -41,7 +41,7 @@ pep8==1.7.0
 pexpect==4.0.1
 Pillow==3.1.2
 piston-mini-client==0.7.5
-psutil==3.4.2
+psutil==5.4.1
 ptyprocess==0.5
 py==1.4.31
 pyasn1==0.1.9
