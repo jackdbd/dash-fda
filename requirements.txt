@@ -70,7 +70,7 @@ software-center-aptd-plugins==0.0.0
 SQLAlchemy==1.0.11
 sympy==1.0
 system-service==0.3
-tabulate==0.7.7
+tabulate==0.8.1
 ubuntu-drivers-common==0.0.0
 ufw==0.35
 unattended-upgrades==0.1
