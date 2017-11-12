@@ -19,7 +19,7 @@ floyd-cli==0.10.5
 html5lib==0.999
 httplib2==0.9.1
 idna==2.5
-invoke==0.20.3
+invoke==0.21.0
 jdcal==1.0
 language-selector==0.1
 lightdm-gtk-greeter-settings==1.2.1
