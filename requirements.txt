@@ -34,7 +34,7 @@ oauthlib==1.0.3
 onboard==1.2.0
 oneconf==0.3.9
 openpyxl==2.3.0
-pandas==0.18.1
+pandas==0.21.0
 paramiko==1.17.2
 pathlib2==2.3.0
 pep8==1.7.0
