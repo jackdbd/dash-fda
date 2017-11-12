@@ -417,7 +417,7 @@ for css in external_css:
     ]
 )
 @cache.memoize(timeout=30)  # in seconds
-def _update_table(n_clicks, year_range, manufacturer, device):
+def update_table(n_clicks, year_range, manufacturer, device):
     start = '{}-01-01'.format(year_range[0])
     end = '{}-12-31'.format(year_range[1])
     url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]+' \
@@ -449,7 +449,7 @@ def _update_table(n_clicks, year_range, manufacturer, device):
     inputs=[Input('year-slider', 'value')],
 )
 # @cache.memoize(timeout=30)  # in seconds
-def _update_intermediate_value(year_range):
+def update_intermediate_value(year_range):
     start = '{}-01-01'.format(year_range[0])
     end = '{}-12-31'.format(year_range[1])
 
@@ -478,7 +478,7 @@ def _update_intermediate_value(year_range):
     ],
 )
 # @cache.memoize(timeout=30)  # in seconds (pickle.dump fails)
-def _update_pie_event(year_range):
+def update_pie_event(year_range):
     start = '{}-01-01'.format(year_range[0])
     end = '{}-12-31'.format(year_range[1])
     url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
@@ -517,7 +517,7 @@ def _update_pie_event(year_range):
     ],
 )
 # @cache.memoize()  # if placed here, pickle.dump fails
-def _update_pie_device(year_range):
+def update_pie_device(year_range):
     start = '{}-01-01'.format(year_range[0])
     end = '{}-12-31'.format(year_range[1])
     url = '{url_prefix}&search=date_received:[{date_start}+TO+{date_end}]' \
@@ -552,7 +552,7 @@ def _update_pie_device(year_range):
         Input('intermediate-value', 'children'),
     ],
 )
-def _update_line_chart_by_year(jsonified_divs):
+def update_line_chart_by_year(jsonified_divs):
     df_a = unjsonify(jsonified_divs, 'json-date-of-event')
     df_a.rename(columns={'count': 'A'}, inplace=True)
     df_b = unjsonify(jsonified_divs, 'json-date-received')
@@ -589,7 +589,7 @@ def _update_line_chart_by_year(jsonified_divs):
         Input('intermediate-value', 'children'),
     ],
 )
-def _update_line_chart_by_month(jsonified_divs):
+def update_line_chart_by_month(jsonified_divs):
     df_a = unjsonify(jsonified_divs, 'json-date-of-event')
     df_a.rename(columns={'count': 'A'}, inplace=True)
     df_b = unjsonify(jsonified_divs, 'json-date-received')
@@ -627,7 +627,7 @@ def _update_line_chart_by_month(jsonified_divs):
         Input('intermediate-value', 'children'),
     ],
 )
-def _update_box_plot_by_month(jsonified_divs):
+def update_box_plot_by_month(jsonified_divs):
     df_b = unjsonify(jsonified_divs, 'json-date-received')
     df = create_months_box(df_b)
 
@@ -649,7 +649,7 @@ def _update_box_plot_by_month(jsonified_divs):
         Input('intermediate-value', 'children'),
     ],
 )
-def _update_line_chart_by_day(jsonified_divs):
+def update_line_chart_by_day(jsonified_divs):
     df_a = unjsonify(jsonified_divs, 'json-date-of-event')
     df_a.rename(columns={'count': 'A'}, inplace=True)
     df_b = unjsonify(jsonified_divs, 'json-date-received')
