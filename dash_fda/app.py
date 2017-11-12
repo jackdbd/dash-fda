@@ -477,7 +477,7 @@ def _update_intermediate_value(year_range):
         Input('year-slider', 'value'),
     ],
 )
-# @cache.memoize(timeout=30)  # in seconds
+# @cache.memoize(timeout=30)  # in seconds (pickle.dump fails)
 def _update_pie_event(year_range):
     start = '{}-01-01'.format(year_range[0])
     end = '{}-12-31'.format(year_range[1])
@@ -509,13 +509,14 @@ def _update_pie_event(year_range):
     return figure
 
 
+# @cache.memoize()  # if placed here, it seems to work
 @app.callback(
     output=Output('pie-device', 'figure'),
     inputs=[
         Input('year-slider', 'value'),
     ],
 )
-# @cache.memoize(timeout=30)  # in seconds
+# @cache.memoize()  # if placed here, pickle.dump fails
 def _update_pie_device(year_range):
     start = '{}-01-01'.format(year_range[0])
     end = '{}-12-31'.format(year_range[1])
@@ -574,7 +575,10 @@ def _update_line_chart_by_year(jsonified_divs):
             name='Report received by FDA',
         ),
     ])
-    layout = go.Layout(title='Adverse event reports by Year')
+    layout = go.Layout(
+        title='Adverse event reports by Year',
+        font=dict(family=theme['font-family'], color='#777777'),
+    )
     figure = go.Figure(data=data, layout=layout)
     return figure
 
@@ -608,7 +612,10 @@ def _update_line_chart_by_month(jsonified_divs):
             name='Report received by FDA',
         ),
     ])
-    layout = go.Layout(title='Adverse event reports by Month')
+    layout = go.Layout(
+        title='Adverse event reports by Month',
+        font=dict(family=theme['font-family'], color='#777777'),
+    )
     figure = go.Figure(data=data, layout=layout)
     return figure
 
@@ -628,7 +635,10 @@ def _update_box_plot_by_month(jsonified_divs):
     boxes = list(map(func, df.columns))
 
     data = go.Data(boxes)
-    layout = go.Layout(title='Adverse event reports received by Month')
+    layout = go.Layout(
+        title='Adverse event reports received by Month',
+        font=dict(family=theme['font-family'], color='#777777'),
+    )
     figure = go.Figure(data=data, layout=layout)
     return figure
 
@@ -662,7 +672,10 @@ def _update_line_chart_by_day(jsonified_divs):
             name='Report received by FDA',
         ),
     ])
-    layout = go.Layout(title='Adverse event reports by Day')
+    layout = go.Layout(
+        title='Adverse event reports by Day',
+        font=dict(family=theme['font-family'], color='#777777'),
+    )
     figure = go.Figure(data=data, layout=layout)
     return figure
 
