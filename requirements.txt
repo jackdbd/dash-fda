@@ -37,7 +37,7 @@ openpyxl==2.3.0
 pandas==0.18.1
 paramiko==1.17.2
 pathlib2==2.3.0
-pep8==1.7.0
+pep8==1.7.1
 pexpect==4.0.1
 Pillow==3.1.2
 piston-mini-client==0.7.5
