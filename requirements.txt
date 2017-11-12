@@ -23,7 +23,7 @@ invoke==0.20.3
 jdcal==1.0
 language-selector==0.1
 lightdm-gtk-greeter-settings==1.2.1
-lxml==3.5.0
+lxml==4.1.1
 marshmallow==2.13.5
 mccabe==0.2.1
 menulibre==2.1.3
