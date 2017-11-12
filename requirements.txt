@@ -16,7 +16,7 @@ ecdsa==0.13
 Fabric==1.12.0
 flake8==2.5.4
 floyd-cli==0.10.5
-html5lib==0.999
+html5lib==0.999999999
 httplib2==0.9.1
 idna==2.5
 invoke==0.20.3
