@@ -25,7 +25,7 @@ language-selector==0.1
 lightdm-gtk-greeter-settings==1.2.1
 lxml==3.5.0
 marshmallow==2.13.5
-mccabe==0.2.1
+mccabe==0.6.1
 menulibre==2.1.3
 mpmath==0.19
 mugshot==0.3.1
