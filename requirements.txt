@@ -61,7 +61,7 @@ pyxdg==0.25
 reportlab==3.3.0
 requests==2.18.3
 requests-toolbelt==0.8.0
-selenium==2.53.6
+selenium==3.7.0
 sessioninstaller==0.0.0
 shortuuid==0.5.0
 simpy==3.0.10
