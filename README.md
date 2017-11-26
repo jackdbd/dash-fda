@@ -5,6 +5,8 @@ A Dash app to visualize data from the openFDA elasticsearch API.
 
 ![A GIF file showing a short demo on how to use the Dash FDA dashboard](https://github.com/jackdbd/dash-fda/blob/master/demo.gif "How to use the Dash FDA dashboard")
 
+[App on Heroku](https://mighty-garden-67470.herokuapp.com/)
+
 Built with:
 
 - [Plotly Dash](https://plot.ly/products/dash/)
