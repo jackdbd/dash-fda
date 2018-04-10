@@ -10,7 +10,7 @@ dash-core-components==0.14.0
 dash-html-components==0.10.0
 dash-renderer==0.12.1
 dash-table-experiments==0.6.0
-ddt==1.1.1
+ddt==1.1.2
 decorator==4.2.1
 flake8==3.5.0
 Flask==0.12.2
