@@ -10,10 +10,10 @@ with open('LICENSE') as f:
 setup(
     name='dash_fda',
     version='0.1.0',
-    description='Python starting project',
+    description='A Dash app displaying data from the openFDA elasticsearch API',
     long_description=readme,
-    author='Name Surname',
-    author_email='your-email@gmail.com',
+    author='Giacomo Debiddda',
+    author_email='jackdebidda@gmail.com',
     url='https://github.com/jackdbd/dash-fda',
     license=license,
     packages=find_packages(exclude=('tests', 'docs'))
