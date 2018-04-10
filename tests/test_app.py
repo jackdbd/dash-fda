@@ -3,7 +3,7 @@ import unittest
 import dash_html_components as html
 from ddt import ddt, data
 from flask import json
-from dash_fda.app import app, update_table, url_prefix
+from .context import app, update_table, url_prefix
 
 
 @ddt
