@@ -5,7 +5,7 @@ click==6.7
 codecov==2.0.15
 coverage==4.4.2
 dash==0.21.0
-dash-core-components==0.18.0
+dash-core-components==0.22.1
 dash-html-components==0.8.0
 dash-renderer==0.11.2
 dash-table-experiments==0.6.0
