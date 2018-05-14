@@ -1,5 +1,5 @@
 astroid==1.6.3
-attrs==17.4.0
+attrs==18.1.0
 black==18.4a4
 certifi==2018.4.16
 chardet==3.0.4
