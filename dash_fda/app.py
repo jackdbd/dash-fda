@@ -151,7 +151,7 @@ if 'DYNO' in os.environ:
     # the app is on Heroku
     debug = False
     # google analytics with the tracking ID for this app
-    external_js.append('https://codepen.io/jackdbd/pen/rYmdLN.js')
+    # external_js.append('https://codepen.io/jackdbd/pen/rYmdLN.js')
 else:
     debug = True
     dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
