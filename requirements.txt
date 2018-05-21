@@ -1,4 +1,4 @@
-astroid==1.6.3
+astroid==1.6.4
 attrs==18.1.0
 black==18.4a4
 certifi==2018.4.16
