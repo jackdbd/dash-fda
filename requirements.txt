@@ -1,6 +1,6 @@
-astroid==1.6.3
+astroid==1.6.4
 attrs==18.1.0
-black==18.4a4
+black==18.5b0
 certifi==2018.4.16
 chardet==3.0.4
 click==6.7
@@ -32,13 +32,13 @@ mccabe==0.6.1
 more-itertools==4.1.0
 nbformat==4.4.0
 numpy==1.14.3
-pandas==0.22.0
+pandas==0.23.0
 plotly==2.6.0
 pluggy==0.6.0
 py==1.5.3
 pycodestyle==2.4.0
-pyflakes==1.6.0
-pylint==1.8.4
+pyflakes==2.0.0
+pylint==1.9.1
 pytest==3.5.1
 python-dateutil==2.7.3
 python-dotenv==0.8.2
