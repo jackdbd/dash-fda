@@ -37,7 +37,7 @@ plotly==2.6.0
 pluggy==0.6.0
 py==1.5.3
 pycodestyle==2.4.0
-pyflakes==1.6.0
+pyflakes==2.0.0
 pylint==1.8.4
 pytest==3.5.1
 python-dateutil==2.7.3
