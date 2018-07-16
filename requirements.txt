@@ -42,7 +42,7 @@ pylint==2.0.0
 pytest==3.6.3
 python-dateutil==2.7.3
 python-dotenv==0.8.2
-pytz==2018.4
+pytz==2018.5
 requests==2.18.4
 six==1.11.0
 traitlets==4.3.2
