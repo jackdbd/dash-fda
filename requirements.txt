@@ -31,7 +31,7 @@ MarkupSafe==1.0
 mccabe==0.6.1
 more-itertools==4.2.0
 nbformat==4.4.0
-numpy==1.14.3
+numpy==1.15.0
 pandas==0.23.0
 plotly==2.6.0
 pluggy==0.6.0
