@@ -7,7 +7,7 @@ def get_results(url):
     response = requests.get(url)
     if response.ok:
         d = json.loads(response.text)
-        results = d['results']
+        results = d["results"]
     else:
         results = []
     return results
@@ -16,7 +16,7 @@ def get_results(url):
 def get_meta(url):
     response = requests.get(url)
     d = json.loads(response.text)
-    return d['meta']
+    return d["meta"]
 
 
 def create_intermediate_df(url):
@@ -27,8 +27,9 @@ def create_intermediate_df(url):
 
 
 def unjsonify(jsonified_divs, id_div):
-    jsonified_df = [d['props']['children'] for d in jsonified_divs
-                    if d['props']['id'] == id_div][0]
+    jsonified_df = [
+        d["props"]["children"] for d in jsonified_divs if d["props"]["id"] == id_div
+    ][0]
     d = json.loads(jsonified_df)
     df = pd.DataFrame(d)
     return df
