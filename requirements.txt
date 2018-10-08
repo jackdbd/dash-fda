@@ -9,7 +9,7 @@ coverage==4.5.1
 dash==0.28.2
 dash-core-components==0.33.0
 dash-html-components==0.13.2
-dash-renderer==0.13.0
+dash-renderer==0.14.1
 dash-table-experiments==0.6.0
 ddt==1.2.0
 decorator==4.2.1
