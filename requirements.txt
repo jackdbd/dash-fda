@@ -32,7 +32,7 @@ mccabe==0.6.1
 more-itertools==5.0.0
 nbformat==4.4.0
 numpy==1.16.1
-pandas==0.23.3
+pandas==0.24.1
 plotly==3.0.2
 pluggy==0.7.1
 py==1.5.4
