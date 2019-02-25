@@ -18,7 +18,7 @@ Flask==1.0.2
 Flask-Caching==1.5.0
 Flask-Compress==1.4.0
 Flask-SeaSurf==0.2.2
-gunicorn==19.8.1
+gunicorn==19.9.0
 idna==2.7
 ipython-genutils==0.2.0
 isort==4.3.4
