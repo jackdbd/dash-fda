@@ -22,7 +22,7 @@ gunicorn==19.9.0
 idna==2.8
 ipython-genutils==0.2.0
 isort==4.3.16
-itsdangerous==0.24
+itsdangerous==1.1.0
 Jinja2==2.10
 jsonschema==2.6.0
 jupyter-core==4.4.0
