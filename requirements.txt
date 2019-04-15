@@ -6,7 +6,7 @@ chardet==3.0.4
 click==7.0
 codecov==2.0.15
 coverage==4.5.3
-dash==0.22.0
+dash==0.41.0
 dash-core-components==0.26.0
 dash-html-components==0.11.0
 dash-renderer==0.13.0
