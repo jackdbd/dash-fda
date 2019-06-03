@@ -14,7 +14,7 @@ dash-table-experiments==0.6.0
 ddt==1.2.1
 decorator==4.4.0
 flake8==3.7.7
-Flask==1.0.2
+Flask==1.0.3
 Flask-Caching==1.4.0
 Flask-Compress==1.4.0
 Flask-SeaSurf==0.2.2
