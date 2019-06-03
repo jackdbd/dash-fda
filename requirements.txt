@@ -8,7 +8,7 @@ codecov==2.0.15
 coverage==4.5.3
 dash==0.43.0
 dash-core-components==0.48.0
-dash-html-components==0.11.0
+dash-html-components==0.16.0
 dash-renderer==0.13.0
 dash-table-experiments==0.6.0
 ddt==1.2.0
