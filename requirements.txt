@@ -33,7 +33,7 @@ more-itertools==7.1.0
 nbformat==4.4.0
 numpy==1.16.4
 pandas==0.24.2
-plotly==3.0.2
+plotly==3.10.0
 pluggy==0.7.1
 py==1.5.4
 pycodestyle==2.4.0
