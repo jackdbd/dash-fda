@@ -38,7 +38,7 @@ pluggy==0.13.0
 py==1.8.0
 pycodestyle==2.5.0
 pyflakes==2.1.1
-pylint==2.0.1
+pylint==2.3.1
 pytest==3.6.4
 python-dateutil==2.7.3
 python-dotenv==0.8.2
