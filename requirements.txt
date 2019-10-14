@@ -12,7 +12,7 @@ dash-html-components==1.0.1
 dash-renderer==1.1.1
 dash-table-experiments==0.6.0
 ddt==1.2.1
-decorator==4.2.1
+decorator==4.4.0
 flake8==3.5.0
 Flask==1.0.2
 Flask-Caching==1.4.0
