@@ -13,7 +13,7 @@ dash-renderer==1.2.0
 dash-table-experiments==0.6.0
 ddt==1.2.1
 decorator==4.4.1
-flake8==3.5.0
+flake8==3.7.9
 Flask==1.0.2
 Flask-Caching==1.4.0
 Flask-Compress==1.4.0
