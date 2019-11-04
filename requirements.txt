@@ -29,7 +29,7 @@ jupyter-core==4.6.1
 lazy-object-proxy==1.4.3
 MarkupSafe==1.1.1
 mccabe==0.6.1
-more-itertools==4.2.0
+more-itertools==7.2.0
 nbformat==4.4.0
 numpy==1.15.0
 pandas==0.23.3
