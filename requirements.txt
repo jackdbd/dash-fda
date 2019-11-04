@@ -34,7 +34,7 @@ nbformat==4.4.0
 numpy==1.17.3
 pandas==0.25.3
 plotly==4.2.1
-pluggy==0.7.1
+pluggy==0.13.0
 py==1.5.4
 pycodestyle==2.4.0
 pyflakes==2.0.0
