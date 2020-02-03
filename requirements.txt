@@ -15,7 +15,7 @@ ddt==1.2.2
 decorator==4.4.1
 flake8==3.7.9
 Flask==1.1.1
-Flask-Caching==1.4.0
+Flask-Caching==1.8.0
 Flask-Compress==1.4.0
 Flask-SeaSurf==0.2.2
 gunicorn==19.8.1
