@@ -36,7 +36,7 @@ pandas==1.0.2
 plotly==4.5.4
 pluggy==0.13.1
 py==1.8.1
-pycodestyle==2.4.0
+pycodestyle==2.5.0
 pyflakes==2.0.0
 pylint==2.0.1
 pytest==3.6.4
