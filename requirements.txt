@@ -23,7 +23,7 @@ idna==2.9
 ipython-genutils==0.2.0
 isort==4.3.21
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2==2.11.2
 jsonschema==2.6.0
 jupyter-core==4.4.0
 lazy-object-proxy==1.3.1
