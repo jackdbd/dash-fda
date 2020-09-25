@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "dash-fda"
+version = "0.1.0"
+description = "A Plotly Dash application to interact with the API endpoints of openFDA"
+authors = ["Giacomo Debidda <jackdebidda@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/jackdbd/dash-fda"
+homepage = "https://github.com/jackdbd/dash-fda"
+keywords = ['python', 'dashboard', 'fda']
+
+[tool.poetry.dependencies]
+chart-studio = "^1.1.0"
+dash = "^1.16.1"
+dash-bootstrap-components = "^0.10.6"
+dash-table = "^4.10.1"
+Flask-Caching = "^1.9.0"
+gunicorn = "^20.0.4"
+pandas = "^1.1.2"
+python = "^3.8"
+python-dotenv = "^0.14.0"
+requests = "^2.24.0"
+
+[tool.poetry.dev-dependencies]
+black = "^20.8b1"
+ddt = "^1.4.1"
+poethepoet = "^0.8.0"
+pylint = "^2.6.0"
+pytest = "^6.0.2"
+pytest-cov = "^2.10.1"
+
+[tool.poe.tasks]
+dev = "poetry run python dash_fda/app.py"
+format = "poetry run black ."
+lint = "pylint dash_fda"
+prod = "poetry run gunicorn dash_fda.app:server --bind 0.0.0.0:5000"
+test = "pytest --verbose --cov=dash_fda tests/"
+
+[build-system]
+requires = ["poetry-core>=1.0.0a5"]
+build-backend = "poetry.core.masonry.api"

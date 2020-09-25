@@ -20,8 +20,8 @@ class TestExample(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
 
     def test_bad_request_400(self):
-        """In the openFDA API limit cannot exceed 100 results."""
-        url = "{}&limit=101".format(url_prefix)
+        """In the openFDA API limit cannot exceed 1000 results."""
+        url = "{}&limit=1001".format(url_prefix)
         res = requests.get(url)
         self.assertEqual(res.status_code, 400)
 

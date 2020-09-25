@@ -1,21 +1,21 @@
-# sudo: required  # see https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
-dist: trusty
+os: linux
+dist: xenial
 branches:
   only:
     - master
-# before_install:
-# - sudo apt-get update -qq
+before_install:
+  - sudo apt-get update --quiet
+  - curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 language: python
 python:
-  - 3.6
+  - "3.6"
+  - "3.7"
+  - "3.8"
 install:
-  - pip install -r requirements.txt
-  # - pip install .
+  - $HOME/.poetry/bin/poetry install -v
 script:
-  # - python setup.py install
-  - coverage run -m pytest -v
-after_success:
-  - codecov
+  - $HOME/.poetry/bin/poetry run poe test
 notifications:
-    email:
-        on_success: change
+  email:
+    on_success: change
+    on_failure: always
