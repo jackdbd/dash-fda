@@ -47,7 +47,9 @@ def device_manufacturer_form():
             [
                 dbc.FormGroup(
                     [
-                        dbc.Label("Device (e.g. x-ray)", html_for="medical-device-input"),
+                        dbc.Label(
+                            "Device (e.g. x-ray)", html_for="medical-device-input"
+                        ),
                         dbc.Input(
                             id="medical-device-input",
                             type="text",
@@ -76,34 +78,25 @@ def device_manufacturer_form():
     )
 
 
+def pie_chart_col(chart_id):
+    return dbc.Col(
+        md=6,
+        children=dbc.Card(
+            [
+                dbc.CardBody(
+                    [
+                        dcc.Graph(id=chart_id),
+                    ]
+                ),
+            ],
+        ),
+    )
+
+
 def pie_charts():
     return html.Div(
         [
-            dbc.Card(
-                [
-                    dbc.CardBody(
-                        [
-                            # html.H3("Adverse Event Type", className="card-title"),
-                            dcc.Graph(id="pie-event"),
-                            html.P(
-                                "Some quick example text to build on the card title and "
-                                "make up the bulk of the card's content.",
-                                className="card-text",
-                            ),
-                        ]
-                    ),
-                ],
-            ),
-            dbc.Card(
-                [
-                    dbc.CardBody(
-                        [
-                            # html.H3("Medical Device Class", className="card-title"),
-                            dcc.Graph(id="pie-device"),
-                        ]
-                    ),
-                ]
-            ),
+            dbc.Row([pie_chart_col("pie-event"), pie_chart_col("pie-device")]),
         ]
     )
 
