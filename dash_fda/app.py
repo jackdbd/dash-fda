@@ -122,11 +122,12 @@ def update_table(n_clicks, year_range, manufacturer, device):
     # TODO: it seems that most of the info is in the mdr_text field (a list)
     data = list()
     for res in results:
-        if len(res["mdr_text"]) > 0:
+        try:
+            res["mdr_text"]
             yes_or_no = "Yes"
-            # print(" === mdr_text ===", res["mdr_text"])
-        else:
+        except KeyError:
             yes_or_no = "No"
+
         d = {
             "Event type": res["event_type"],
             "Location": res["event_location"],

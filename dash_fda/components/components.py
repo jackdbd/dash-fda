@@ -47,11 +47,11 @@ def device_manufacturer_form():
             [
                 dbc.FormGroup(
                     [
-                        dbc.Label("Device", html_for="medical-device-input"),
+                        dbc.Label("Device (e.g. x-ray)", html_for="medical-device-input"),
                         dbc.Input(
                             id="medical-device-input",
-                            placeholder="E.g. x-ray",
                             type="text",
+                            value="x-ray",
                         ),
                     ]
                 ),
