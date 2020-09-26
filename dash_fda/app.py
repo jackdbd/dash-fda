@@ -39,9 +39,13 @@ STORE_ID = f"{APP_NAME.replace(' ', '-')}_store"
 
 server = Flask(APP_NAME)
 server.secret_key = SECRET_KEY
+# If serve_locally=False, serve Dash component libraries from a CDN.
+# https://dash.plotly.com/external-resources
 app = dash.Dash(
     name=APP_NAME,
     server=server,
+    serve_locally=False,
+    title=APP_NAME,
     external_stylesheets=[
         dbc.themes.SKETCHY,
         "https://fonts.googleapis.com/css2?family=Roboto&family=Lobster&family=Raleway&display=swap",
