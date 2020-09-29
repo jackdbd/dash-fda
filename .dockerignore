@@ -1,0 +1,11 @@
+.git/
+.pytest_cache/
+cache/
+
+.env
+dash-fda/__pycache__/
+tests/
+.coverage
+.editorconfig
+.travis.yml
+demo.gif
