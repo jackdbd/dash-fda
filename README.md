@@ -1,12 +1,12 @@
 # Dash FDA
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://travis-ci.org/jackdbd/dash-fda.svg?branch=master)](https://travis-ci.org/jackdbd/dash-fda) [![Updates](https://pyup.io/repos/github/jackdbd/dash-fda/shield.svg)](https://pyup.io/repos/github/jackdbd/dash-fda/) [![Python 3](https://pyup.io/repos/github/jackdbd/dash-fda/python-3-shield.svg)](https://pyup.io/repos/github/jackdbd/dash-fda/) [![Coverage](https://codecov.io/github/jackdbd/dash-fda/coverage.svg?branch=master)](https://codecov.io/github/jackdbd/dash-fda?branch=master) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://travis-ci.org/jackdbd/dash-fda.svg?branch=master)](https://travis-ci.org/jackdbd/dash-fda) [![Coverage](https://codecov.io/github/jackdbd/dash-fda/coverage.svg?branch=master)](https://codecov.io/github/jackdbd/dash-fda?branch=master) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 A Dash app to visualize data from the openFDA elasticsearch API.
 
 ![A GIF file showing a short demo on how to use the Dash FDA dashboard](https://github.com/jackdbd/dash-fda/blob/master/demo.gif "How to use the Dash FDA dashboard")
 
-[App on Heroku](https://mighty-garden-67470.herokuapp.com/)
+[App on CapRover](https://cutt.ly/dash-fda).
 
 Built with:
 
@@ -24,11 +24,9 @@ This project requires to get some API keys from external services.
 
 ## Installation
 
-:warning: Do **NOT** use the `requirements.txt` file to install the dependencies on your machine. I need to keep it to deploy on Heroku because [Heroku does not yet support poetry](https://github.com/heroku/heroku-buildpack-python/issues/796) (I tried [this buildpack](https://elements.heroku.com/buildpacks/moneymeets/python-poetry-buildpack) but it didn't work).
-
 This project uses [pyenv](https://github.com/pyenv/pyenv) and [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) to manage the Python virtual environment, and [poetry](https://poetry.eustace.io/) to manage the project dependencies.
 
-If you don't have it, install python `3.8.5`.
+If you don't already have it, install python `3.8.5`.
 
 ```shell
 pyenv install 3.8.5
@@ -49,7 +47,11 @@ Install all the dependencies from the `poetry.lock` file.
 poetry install
 ```
 
+## Tasks
+
 This project uses the task runner [Poe the Poet](https://github.com/nat-n/poethepoet) to run poetry scripts.
+
+## Non-dockerized app
 
 Run the app locally using a development server (Dash uses a Flask development server):
 
@@ -78,7 +80,7 @@ Format all code with black:
 poetry run poe format
 ```
 
-## Docker
+## Dockerized app
 
 Build the Docker image and give it a name and a version tag:
 
@@ -125,14 +127,6 @@ pyenv activate dash_fda
 # re-install all the dependencies
 poetry install
 ```
-
-Generate `requirements.txt` to deploy on Heroku:
-
-```shell
-poetry export -o requirements.txt
-```
-
-Heroku will use the python version specified in `runtime.txt`
 
 ## Disclaimer
 

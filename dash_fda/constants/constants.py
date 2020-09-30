@@ -7,24 +7,19 @@ from dash_fda.exceptions import ImproperlyConfigured
 DEBUG = False
 
 
-if "DYNO" in os.environ:
-    # the app is on Heroku
-    DEBUG = False
-else:
-    DEBUG = True
-    dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-    # print("=== dotenv_path ===", dotenv_path)
-    load_dotenv(dotenv_path)
+dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+# print("=== dotenv_path ===", dotenv_path)
+load_dotenv(dotenv_path)
 
 
 if os.environ.get("SECRET_KEY") is None:
-    raise ImproperlyConfigured("SECRET_KEY (for Flask) not set in .env")
+    raise ImproperlyConfigured("SECRET_KEY (for Flask) not set")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 if os.environ.get("PLOTLY_USERNAME") is None:
-    raise ImproperlyConfigured("PLOTLY_USERNAME not set in .env")
+    raise ImproperlyConfigured("PLOTLY_USERNAME not set")
 if os.environ.get("PLOTLY_API_KEY") is None:
-    raise ImproperlyConfigured("PLOTLY_API_KEY not set in .env")
+    raise ImproperlyConfigured("PLOTLY_API_KEY not set")
 chart_studio.tools.set_credentials_file(
     os.environ["PLOTLY_USERNAME"], os.environ["PLOTLY_API_KEY"]
 )
